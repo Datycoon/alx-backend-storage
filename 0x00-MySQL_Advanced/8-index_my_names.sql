@@ -1,5 +1,6 @@
--- This SQL script creates a index named 'idx_name_first' on the 'name' column of the 'names' table. The index will be created on the first character of 
+-- Creates an index idx_name_first on table names and first letter of name
+-- Only first letter of name must be indexed
 
-USE holberton;
-CREATE INDEX idx_name_first ON names(name(1));
+CREATE INDEX idx_name_first
+ON names(name(1));
 
