@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""
+Redis module, Writing strings to Redis
+Reading from Redis and recovering original type
+Incrementing values, storing lists, Retrieving lists
+"""
 import redis
 import uuid
 from typing import Union, Callable, Optional
@@ -6,21 +11,33 @@ from functools import wraps
 
 
 def count_calls(method: Callable) -> Callable:
-    ''' def count calls '''
+    """
+    Prototype: def count_calls(method: Caallable) -> Callable:
+    Returns a Callable
+    """
     @wraps(method)
     def wrapper(self, *args, **kwds):
-        ''' def wrapper '''
-        key_name = method.__qualname__
-        self._redis.incr(key_name, 0) + 1
+        """
+        Prototype: def wrapper(self, *args, **kwds):
+        Returns wrapper
+        """
+        key_m = method.__qualname__
+        self._redis.incr(key_m)
         return method(self, *args, **kwds)
     return wrapper
 
 
 def call_history(method: Callable) -> Callable:
-    ''' def call history '''
+    """
+    Prototype: def call_history(method: Callable) -> Callable:
+    Returns a Callable
+    """
     @wraps(method)
     def wrapper(self, *args, **kwds):
-        ''' def wrapper'''
+        """
+        Prototype: def wrapper(self, *args, **kwds):
+        Returns wrapper
+        """
         key_m = method.__qualname__
         inp_m = key_m + ':inputs'
         outp_m = key_m + ":outputs"
@@ -33,7 +50,10 @@ def call_history(method: Callable) -> Callable:
 
 
 def replay(func: Callable):
-    '''def replay'''
+    """
+    Prototype: def replay(func: Callable):
+    Displays history of calls of a particular function
+    """
     r = redis.Redis()
     key_m = func.__qualname__
     inp_m = r.lrange("{}:inputs".format(key_m), 0, -1)
@@ -46,29 +66,38 @@ def replay(func: Callable):
     print(fin)
     for k, v in zip(inp_m, outp_m):
         fin = '{}(*{}) -> {}'.format(
-            key_m,
-            k.decode('utf-8'),
-            v.decode('utf-8')
-        )
+            key_m, k.decode('utf-8'), v.decode('utf-8'))
         print(fin)
 
 
 class Cache():
-    ''' class cache '''
+    """
+    Store instance of Redis client as private variable _redis
+    Flush the instance using flushdb
+    """
     def __init__(self):
-        ''' def init '''
+        """
+        Prototype: def __init__(self):
+        Store instance of Redis client as private variable _redis
+        """
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @call_history
+    @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
-        ''' def store '''
-        generate = str(uuid.uuid4())
-        self._redis.set(generate, data)
-        return generate
+        """
+        Store history of inputs and outputs for a particular function
+        """
+        gen = str(uuid.uuid4())
+        self._redis.set(gen, data)
+        return gen
 
     def get(self, key: str,
             fn: Optional[Callable] = None) -> Union[str, bytes, int, float]:
-        ''' def get '''
+        """
+        Convert data back to desired format
+        """
         value = self._redis.get(key)
         return value if not fn else fn(value)
 
